@@ -1,0 +1,26 @@
+﻿@page
+@model EZYSoft.Pages.IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+
+<div class="text-center">
+    <h1>Welcome, @(Model.UserDetails?.FirstName ?? "Guest") @(Model.UserDetails?.LastName ?? "")</h1>
+    <div>
+        <p><strong>NRIC:</strong> @Model.DecryptedNRIC</p>
+        <p><strong>Date of Birth:</strong> @(Model.UserDetails?.DateOfBirth.ToShortDateString() ?? "N/A")</p>
+        <p><strong>Gender:</strong> @(Model.UserDetails?.Gender ?? "N/A")</p>
+        <p><strong>Who Am I:</strong> @(Model.UserDetails?.WhoAmI ?? "N/A")</p>
+        <p>
+            <strong>Resume:</strong>
+            @if (!string.IsNullOrEmpty(Model.UserDetails?.ResumePath))
+            {
+                <a href="@Model.UserDetails.ResumePath" target="_blank">View Resume</a>
+            }
+            else
+            {
+                <span>N/A</span>
+            }
+        </p>
+    </div>
+</div>
