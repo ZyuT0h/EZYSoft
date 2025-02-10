@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Cryptography;
+using Microsoft.Extensions.Configuration;
 
 namespace EZYSoft.Pages
 {
@@ -16,6 +16,8 @@ namespace EZYSoft.Pages
         private readonly SignInManager<IdentityUser> signInManager;
         private readonly EzysoftDbContext dbContext;
         private readonly ILogger<RegisterModel> logger;
+            private readonly IConfiguration _configuration;
+
 
         [BindProperty]
         public Register RModel { get; set; }
@@ -24,16 +26,19 @@ namespace EZYSoft.Pages
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             EzysoftDbContext dbContext,
-            ILogger<RegisterModel> logger)
+            ILogger<RegisterModel> logger,
+            IConfiguration configuration)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.dbContext = dbContext;
             this.logger = logger;
+            _configuration = configuration;
         }
 
         public IActionResult OnGet()
         {
+            ViewData["RecaptchaSiteKey"] = _configuration["Recaptcha:SiteKey"];
             return Page();
         }
 
@@ -41,6 +46,18 @@ namespace EZYSoft.Pages
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostAsync()
         {
+            // Retrieve the reCAPTCHA token from the form
+            var recaptchaToken = Request.Form["g-recaptcha-response"];
+            var secretKey = _configuration["Recaptcha:SecretKey"];
+
+            // Verify the reCAPTCHA token
+            var isValid = await RecaptchaHelper.VerifyRecaptchaAsync(secretKey, recaptchaToken, "register");
+            if (!isValid)
+            {
+                ModelState.AddModelError("", "reCAPTCHA validation failed. Please try again.");
+                return Page();
+            }
+
             if (!ModelState.IsValid)
             {
                 return Page();

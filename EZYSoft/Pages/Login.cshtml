@@ -8,7 +8,7 @@
     <div class="row justify-content-center align-items-center">
         <div class="col-sm-12 col-md-12 col-lg-4">
             <h1 class="mb-3">Login</h1>
-            <form method="post">
+            <form method="post" id="loginForm">
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <div class="mb-3">
                     <label class="form-label" asp-for="Input.Email">Email</label>
@@ -20,8 +20,28 @@
                     <input type="password" asp-for="Input.Password" class="form-control" required />
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
+
+                <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+
                 <button type="submit" class="btn btn-primary">Login</button>
             </form>
         </div>
     </div>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js?render=@ViewData["RecaptchaSiteKey"]"></script>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+        event.preventDefault(); // Prevent form submission temporarily
+
+        grecaptcha.ready(function () {
+            grecaptcha.execute('@ViewData["RecaptchaSiteKey"]', { action: 'login' }).then(function (token) {
+                // Set the token value in the hidden input field
+                document.getElementById('g-recaptcha-response').value = token;
+
+                // Submit the form programmatically
+                document.getElementById('loginForm').submit();
+            });
+        });
+    });
+</script>

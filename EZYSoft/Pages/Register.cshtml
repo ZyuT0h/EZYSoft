@@ -8,7 +8,7 @@
     <div class="row justify-content-center align-items-center">
         <div class="col-sm-12 col-md-12 col-lg-4">
             <h1 class="mb-3">Membership Register</h1>
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" id="registerForm">
                 <div asp-validation-summary="All" class="text-danger"></div>
 
                 <div class="mb-3">
@@ -82,11 +82,30 @@
                     <span asp-validation-for="RModel.WhoAmI" class="text-danger"></span>
                 </div>
 
+                <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" />
+
                 <button type="submit" class="btn btn-primary">Register</button>
             </form>
         </div>
     </div>
 </div>
+
+<script src="https://www.google.com/recaptcha/api.js?render=@ViewData["RecaptchaSiteKey"]"></script>
+<script>
+    document.getElementById('registerForm').addEventListener('submit', async function (event) {
+        event.preventDefault(); // Prevent form submission temporarily
+
+        grecaptcha.ready(function () {
+            grecaptcha.execute('@ViewData["RecaptchaSiteKey"]', { action: 'register' }).then(function (token) {
+                // Set the token value in the hidden input field
+                document.getElementById('g-recaptcha-response').value = token;
+
+                // Submit the form programmatically
+                document.getElementById('registerForm').submit();
+            });
+        });
+    });
+</script>
 
 <script>
     function checkPasswordStrength() {

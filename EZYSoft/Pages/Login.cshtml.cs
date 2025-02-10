@@ -1,3 +1,4 @@
+using EZYSoft.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace EZYSoft.Pages
         private readonly UserManager<IdentityUser> userManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IDistributedCache _cache; // Used for session management
+        private readonly IConfiguration _configuration;
 
         [BindProperty]
         public LoginInput Input { get; set; }
 
+        public string RecaptchaSiteKey => _configuration["Recaptcha:SiteKey"];
         public class LoginInput
         {
             [Required(ErrorMessage = "Email is required.")]
@@ -29,16 +32,22 @@ namespace EZYSoft.Pages
             public string Password { get; set; }
         }
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, UserManager<IdentityUser> userManager, IHttpContextAccessor httpContextAccessor, IDistributedCache cache)
+        public LoginModel(SignInManager<IdentityUser> signInManager,
+            UserManager<IdentityUser> userManager, 
+            IHttpContextAccessor httpContextAccessor, 
+            IDistributedCache cache,
+            IConfiguration configuration)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
             this._httpContextAccessor = httpContextAccessor;
             this._cache = cache;
+            this._configuration = configuration;
         }
 
         public IActionResult OnGet()
         {
+            ViewData["RecaptchaSiteKey"] = _configuration["Recaptcha:SiteKey"];
             return Page();
         }
 
@@ -46,6 +55,18 @@ namespace EZYSoft.Pages
         {
             if (!ModelState.IsValid)
             {
+                return Page();
+            }
+
+            // Retrieve the reCAPTCHA token from the form
+            var recaptchaToken = Request.Form["g-recaptcha-response"];
+            var secretKey = _configuration["Recaptcha:SecretKey"];
+
+            // Verify the reCAPTCHA token
+            var isValid = await RecaptchaHelper.VerifyRecaptchaAsync(secretKey, recaptchaToken, "login");
+            if (!isValid)
+            {
+                ModelState.AddModelError("", "reCAPTCHA validation failed. Please try again.");
                 return Page();
             }
 
