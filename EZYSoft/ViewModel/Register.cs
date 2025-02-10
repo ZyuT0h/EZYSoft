@@ -25,7 +25,8 @@
 
 			[Required(ErrorMessage = "Email is required.")]
 			[EmailAddress(ErrorMessage = "Invalid Email Address.")]
-			[Display(Name = "Email Address")]
+            [RegularExpression(@"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", ErrorMessage = "Invalid email format.")]
+            [Display(Name = "Email Address")]
 			public string Email { get; set; }
 
 			[Required(ErrorMessage = "Password is required.")]
