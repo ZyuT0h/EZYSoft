@@ -37,6 +37,8 @@ namespace EZYSoft.Pages
             return Page();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
@@ -52,6 +54,13 @@ namespace EZYSoft.Pages
                 return Page();
             }
 
+            // Check if password and confirmation match
+            if (RModel.Password != RModel.ConfirmPassword)
+            {
+                ModelState.AddModelError("RModel.ConfirmPassword", "Passwords do not match.");
+                return Page();
+            }
+
             // Create a new user
             var user = new IdentityUser
             {
@@ -64,8 +73,6 @@ namespace EZYSoft.Pages
             {
                 try
                 {
-                    //var dataProtectionProvider = DataProtectionProvider.Create("EncryptData");
-                    //var protector = dataProtectionProvider.CreateProtector("MySecretKey"); protector.Protect(RModel.NRIC),
 
                     // Encrypt the NRIC using AES
                     var encryptedNRIC = AesEncryptionHelper.Encrypt(RModel.NRIC);
@@ -93,7 +100,10 @@ namespace EZYSoft.Pages
                     // Sign in the user
                     await signInManager.SignInAsync(user, isPersistent: false);
 
-                    return RedirectToPage("Index");
+                    // Set the UserId in session after successful sign-in
+                    HttpContext.Session.SetString("UserId", user.Id);
+
+                    return RedirectToPage("/Index");
                 }
                 catch (Exception ex)
                 {

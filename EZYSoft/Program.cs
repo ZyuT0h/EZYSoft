@@ -21,7 +21,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 12;
 
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);// Locked for 5mins
     options.Lockout.MaxFailedAccessAttempts = 3; // Rate Limitting 
 })
 .AddEntityFrameworkStores<EzysoftDbContext>()
