@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using EZYSoft.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequiredLength = 12;
 
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);// Locked for 5mins
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);// Locked for 5mins
     options.Lockout.MaxFailedAccessAttempts = 3; // Rate Limitting 
 })
 .AddEntityFrameworkStores<EzysoftDbContext>()
@@ -49,6 +50,11 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true; // Essential cookie
 });
 
+// Add configuration for EmailSettings
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+
+// Register IEmailSender and its implementation
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 
 var app = builder.Build();
 
