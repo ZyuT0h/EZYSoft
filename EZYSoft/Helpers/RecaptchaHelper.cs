@@ -20,6 +20,9 @@ namespace EZYSoft.Helpers
                 var response = await client.PostAsync(RECAPTCHA_URL, content);
                 var jsonResponse = await response.Content.ReadAsStringAsync();
 
+                // Log the full JSON response
+                Console.WriteLine("Google reCAPTCHA API Response: " + jsonResponse);
+
                 // Deserialize the JSON response into the RecaptchaResponse class
                 var result = JsonSerializer.Deserialize<RecaptchaResponse>(jsonResponse);
 
