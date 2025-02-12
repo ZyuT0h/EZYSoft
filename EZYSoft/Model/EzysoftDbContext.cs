@@ -12,6 +12,7 @@ namespace EZYSoft.Model
 
         // Add DbSet for your custom tables
         public DbSet<UserDetail> UserDetails { get; set; }
+        public DbSet<PasswordHistory> PasswordHistories { get; set; } 
 
         public EzysoftDbContext(IConfiguration configuration)
         {
@@ -36,6 +37,15 @@ namespace EZYSoft.Model
 				.WithOne()
 				.HasForeignKey<UserDetail>(ud => ud.UserId) // Foreign key
 				.OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete behavior
+
+            // Configure the relationship for PasswordHistory
+            modelBuilder.Entity<PasswordHistory>()
+                .HasKey(ph => ph.Id); // Define Id as the primary key
+            modelBuilder.Entity<PasswordHistory>()
+                .HasOne(ph => ph.User) // One-to-many relationship with IdentityUser
+                .WithMany()
+                .HasForeignKey(ph => ph.UserId) // Foreign key
+                .OnDelete(DeleteBehavior.Cascade); // Optional: Cascade delete behavior
         }
 	}
 }

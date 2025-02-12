@@ -126,15 +126,15 @@
         const percentage = (strength / 5) * 100; // Max strength is 5
         strengthBar.style.width = percentage + "%";
 
-        if (strength <= 2) {
-            strengthBar.className = "progress-bar weak";
-            strengthText.textContent = "Weak password. Please improve it.";
-        } else if (strength === 3 || strength === 4) {
-            strengthBar.className = "progress-bar medium";
-            strengthText.textContent = "Medium password. Good, but can be stronger.";
+        if (percentage < 40) {
+            strengthBar.className = "progress-bar bg-danger";
+            strengthText.textContent = "Weak password.";
+        } else if (percentage < 80) {
+            strengthBar.className = "progress-bar bg-warning";
+            strengthText.textContent = "Moderate password.";
         } else {
-            strengthBar.className = "progress-bar strong";
-            strengthText.textContent = "Strong password. Excellent!";
+            strengthBar.className = "progress-bar bg-success";
+            strengthText.textContent = "Strong password!";
         }
     }
 </script>

@@ -56,6 +56,8 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 // Register IEmailSender and its implementation
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 
+builder.Services.AddScoped<PasswordService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
