@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
+using System.Net.Mail;
 
 namespace EZYSoft.Pages
 {
@@ -58,11 +60,9 @@ namespace EZYSoft.Pages
                 return Page();
             }
 
-            // Retrieve the reCAPTCHA token from the form
             var recaptchaToken = Request.Form["g-recaptcha-response"];
             var secretKey = _configuration["Recaptcha:SecretKey"];
 
-            // Verify the reCAPTCHA token
             var isValid = await RecaptchaHelper.VerifyRecaptchaAsync(secretKey, recaptchaToken, "login");
             if (!isValid)
             {
@@ -73,37 +73,83 @@ namespace EZYSoft.Pages
             var user = await userManager.FindByEmailAsync(Input.Email);
             if (user != null && await userManager.CheckPasswordAsync(user, Input.Password))
             {
-                // Check if there's already an active session in Redis
-                var existingSessionId = await _cache.GetStringAsync($"user-session-{user.Id}");
-
-                if (existingSessionId != null)
+                // Check if TwoFactorEnabled is true
+                if (user.TwoFactorEnabled)
                 {
-                    // Handle multiple logins: Notify user or prevent login
-                    ModelState.AddModelError("", "You are already logged in on another device.");
-                    return Page();
+                    // Generate a 2FA code
+                    var code = new Random().Next(100000, 999999).ToString(); // 6-digit code
+
+                    // Store the 2FA code in a temporary cache for later verification
+                    await _cache.SetStringAsync($"2fa-code-{user.Id}", code, new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) // Valid for 5 minutes
+                    });
+
+                    // Store the UserId in session to later use in Verify2FA
+                    _httpContextAccessor.HttpContext.Session.SetString("UserId", user.Id);
+
+                    // Send the 2FA code to the user's email
+                    var emailSubject = "Your 2FA Code";
+                    var emailBody = $"Your 2FA code is {code}. It will expire in 5 minutes.";
+
+                    await SendEmailAsync(user.Email, emailSubject, emailBody);
+
+                    // Redirect to the 2FA verification page
+                    return RedirectToPage("/Verify2FA");
                 }
-
-                // Sign in the user
-                await signInManager.SignInAsync(user, isPersistent: false);
-
-                // Generate and save session ID
-                var sessionId = Guid.NewGuid().ToString();
-                await _cache.SetStringAsync($"user-session-{user.Id}", sessionId, new DistributedCacheEntryOptions
+                else
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
-                });
+                    // No 2FA required, sign the user in directly
+                    await signInManager.SignInAsync(user, isPersistent: false);
 
-                // Store session ID in the user's session cookie
-                _httpContextAccessor.HttpContext.Session.SetString("SessionId", sessionId);
-                // Store UserId in session
-                _httpContextAccessor.HttpContext.Session.SetString("UserId", user.Id);
+                    _httpContextAccessor.HttpContext.Session.SetString("UserId", user.Id);
 
-                return RedirectToPage("/Index");
+                    // Proceed with the normal login flow
+                    return RedirectToPage("/Index");
+                }
             }
 
             ModelState.AddModelError("", "Invalid email or password.");
             return Page();
         }
+
+
+        private async Task SendEmailAsync(string toEmail, string subject, string body)
+        {
+            // Get the email configuration from appsettings.json
+            var smtpServer = _configuration["EmailSettings:SmtpServer"];
+            var smtpPort = int.Parse(_configuration["EmailSettings:Port"]);
+            var senderEmail = _configuration["EmailSettings:SenderEmail"];
+            var senderName = _configuration["EmailSettings:SenderName"];
+            var password = _configuration["EmailSettings:Password"];
+
+            var smtpClient = new SmtpClient(smtpServer, smtpPort)
+            {
+                Credentials = new NetworkCredential(senderEmail, password),
+                EnableSsl = true // Ensure SSL is enabled
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(senderEmail, senderName),
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = true
+            };
+            mailMessage.To.Add(toEmail);
+
+            try
+            {
+                await smtpClient.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending email: {ex.Message}");
+                throw; // Re-throw the exception to propagate it
+            }
+        }
+
+
     }
 
 }

@@ -23,6 +23,7 @@ namespace EZYSoft.Pages
         public string DecryptedNRIC { get; set; }
         public UserDetail UserDetails { get; set; }
 
+
         public async Task<IActionResult> OnGetAsync()
         {
             // Retrieve UserId from session

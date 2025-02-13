@@ -33,10 +33,10 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Login"; // Redirect to login page if unauthorized/after seession timeout
     options.AccessDeniedPath = "/AccessDenied"; // Redirect if access is denied
 
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(5); // Session timeout
+    options.SlidingExpiration = true; // Extend session on activity
     options.Cookie.HttpOnly = true; // Prevent JavaScript access to cookies
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Ensure cookies are only sent over HTTPS
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Session timeout
-    options.SlidingExpiration = true; // Extend session on activity
     options.Cookie.IsEssential = true; // Mark cookies as essential
 });
 
@@ -45,7 +45,7 @@ builder.Services.AddDistributedMemoryCache(); // Save session in memory
 // Add session services
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
+    options.IdleTimeout = TimeSpan.FromMinutes(5); // Session timeout
     options.Cookie.HttpOnly = true; // Secure cookies
     options.Cookie.IsEssential = true; // Essential cookie
 });

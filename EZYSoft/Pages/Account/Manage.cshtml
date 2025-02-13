@@ -1,0 +1,28 @@
+﻿@page
+@model EZYSoft.Pages.Account.ManageModel
+@{
+    ViewData["Title"] = "Manage Account";
+}
+
+<div class="container">
+    <h1>Manage Account</h1>
+
+    <div class="mb-3">
+        <h3>Two-Factor Authentication</h3>
+
+        @if (Model.IsTwoFactorEnabled)
+        {
+            <p>Your account currently has Two-Factor Authentication enabled.</p>
+            <form method="post" action="/Account/Disable2FA">
+                <button type="submit" class="btn btn-danger">Disable 2FA</button>
+            </form>
+        }
+        else
+        {
+            <p>Your account does not have Two-Factor Authentication enabled.</p>
+            <form method="post" action="/Account/Enable2FA"> 
+                <button type="submit" class="btn btn-primary">Enable 2FA</button>
+            </form>
+        }
+    </div>
+</div>
